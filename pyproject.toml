@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "lennard-jones-fluids"
+version = "0.1.0"
+description = "Montecarlo simulation of Lennard-Jones Fluids"
+authors = ["BridLeiva <yk50tcj5@duck.com>"]
+license = "AGPL"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
