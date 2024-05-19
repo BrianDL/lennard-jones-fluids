@@ -18,16 +18,18 @@ class Region(ABC):
         pass
 
 class Sphere(Region):
-    def __init__(self, center, radius):
+    def __init__(self, radius):
         """
-        Initialize a Sphere instance.
+        Initialize a Sphere instance with its center at (radius, radius, radius),
+        making the x, y, and z planes tangent to the sphere.
         
         Parameters:
-        - center: A tuple representing the center of the sphere (x, y, z).
-        - radius: The radius of the sphere.
+        - radius: The radius of the sphere. Must be a positive number.
         """
-        self.center = center
+        assert radius > 0, "Radius must be a positive number"
         self.radius = radius
+        # Set the center of the sphere to (radius, radius, radius)
+        self.center = (radius, radius, radius)
 
     def contains(self, point):
         """
@@ -37,7 +39,7 @@ class Sphere(Region):
         dy = point[1] - self.center[1]
         dz = point[2] - self.center[2]
         distance_squared = dx**2 + dy**2 + dz**2
-        return distance_squared <= self.radius**2
+        return distance_squared < self.radius**2  # Points on the surface are not inside
 
 class Block(Region):
     def __init__(self, corner):
@@ -95,8 +97,43 @@ if TEST_MODE:
         with pytest.raises(AssertionError):
             Block((-1, -1, -1))  # This should raise an AssertionError because the corner is not in the first quadrant
     
-    # Optional: You might want to test with floating point numbers as well
     def test_block_contains_point_with_floats():
         block = Block((10.5, 10.5, 10.5))
         assert block.contains((10.1, 10.1, 10.1)) == True, \
         "The point is inside the block but was not recognized as such with floating point coordinates."
+
+    def test_sphere_contains_point_inside():
+        sphere = Sphere(5)
+        # A point inside the sphere, not on the surface
+        assert sphere.contains((6, 6, 4)) == True, \
+        "The point is inside the sphere but was not recognized as such."
+    
+    def test_sphere_contains_point_outside():
+        sphere = Sphere(5)
+        # A point outside the sphere
+        assert sphere.contains((11, 11, 11)) == False, \
+        "The point is outside the sphere but was incorrectly recognized as inside."
+    
+    def test_sphere_contains_point_on_surface():
+        sphere = Sphere(5)
+        # A point exactly on the surface should not be considered inside
+        assert sphere.contains((5, 5, 10)) == False, \
+        "The point is on the surface of the sphere but was incorrectly recognized as inside."
+    
+    def test_sphere_center_correctly_set():
+        sphere = Sphere(5)
+        # The center should be at (radius, radius, radius)
+        assert sphere.center == (5, 5, 5), \
+        "The sphere's center is not correctly set at (radius, radius, radius)."
+    
+    def test_sphere_with_zero_radius():
+        # Testing sphere initialization with zero radius should raise an AssertionError
+        with pytest.raises(AssertionError):
+            Sphere(0)
+    
+    def test_sphere_contains_point_near_origin():
+        sphere = Sphere(5)
+        # A point near the origin but outside the sphere
+        assert sphere.contains((1, 1, 1)) == False, \
+        "The point near the origin is incorrectly recognized as inside the sphere."
+
