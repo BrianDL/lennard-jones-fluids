@@ -1,0 +1,2 @@
+#!/usr/bin/bash
+find . -type f -name '*.py' | SIM_TEST_MODE=T entr -r poetry run pytest

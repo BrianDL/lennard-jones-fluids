@@ -13,13 +13,18 @@
     # Define packages as an attribute set
     packageSet = with pkgs; {
       inherit entr;
+      testloop = writeShellScriptBin "loop" ./scripts/start_test_loop;
     };
 
   in rec {
     defaultShell = pkgs.mkShell {
       buildInputs = with packageSet; [
         entr
+        testloop
       ];
+
+      shellHook = ''
+      '';
 
     };
     
