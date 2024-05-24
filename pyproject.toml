@@ -3,7 +3,7 @@ name = "lennard-jones-fluids"
 version = "0.1.0"
 description = "Montecarlo simulation of Lennard-Jones Fluids"
 authors = ["BridLeiva <yk50tcj5@duck.com>"]
-license = "AGPL"
+license = "AGPL-v3"
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -17,3 +17,8 @@ ipython = "^8.24.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "."
+]
