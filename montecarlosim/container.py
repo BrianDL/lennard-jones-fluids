@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 import math
 
+#!/usr/bin/env python
+
 class Region(ABC):
     @abstractmethod
     def contains(self, point):
@@ -16,6 +18,31 @@ class Region(ABC):
         - bool: True if the point is inside the region, False otherwise.
         """
         pass
+
+def get_region(region_type: str, *args, **kwargs) -> Region:
+    """
+    Create an instance of a Region subclass based on the given type name.
+
+    Parameters:
+    - region_type: The name of the Region subclass to instantiate ('sphere' or 'block').
+    - *args: Positional arguments to pass to the Region subclass constructor.
+    - **kwargs: Keyword arguments to pass to the Region subclass constructor.
+
+    Returns:
+    - An instance of the specified Region subclass.
+
+    Raises:
+    - ValueError: If the specified region_type is not recognized.
+    """
+    region_classes = {
+        'sphere': Sphere,
+        'block': Block
+    }
+
+    if region_type not in region_classes:
+        raise ValueError(f"Unknown region type: {region_type}")
+
+    return region_classes[region_type](*args, **kwargs)
 
 class Sphere(Region):
     def __init__(self, radius):
@@ -137,3 +164,29 @@ if TEST_MODE:
         assert sphere.contains((1, 1, 1)) == False, \
         "The point near the origin is incorrectly recognized as inside the sphere."
 
+    def test_get_region_sphere():
+        sphere = get_region('sphere', 5)
+        assert isinstance(sphere, Sphere), "The created object is not an instance of Sphere"
+        assert sphere.radius == 5, "The radius of the created sphere is incorrect"
+
+    def test_get_region_block():
+        block = get_region('block', (10, 10, 10))
+        assert isinstance(block, Block), "The created object is not an instance of Block"
+        assert block.corner == (10, 10, 10), "The corner of the created block is incorrect"
+
+    def test_get_region_invalid_type():
+        with pytest.raises(ValueError, match="Unknown region type: invalid"):
+            get_region('invalid', 5)
+
+    def test_get_region_block_with_floats():
+        block = get_region('block', (10.5, 10.5, 10.5))
+        assert isinstance(block, Block), "The created object is not an instance of Block"
+        assert block.corner == (10.5, 10.5, 10.5), "The corner of the created block is incorrect"
+
+    def test_get_region_sphere_with_zero_radius():
+        with pytest.raises(AssertionError):
+            get_region('sphere', 0)
+
+    def test_get_region_block_with_negative_corner():
+        with pytest.raises(AssertionError):
+            get_region('block', (-1, -1, -1))
