@@ -40,29 +40,56 @@ class Simulation():
         self.steps = []
         self.energies = []
         self.system = None
+    
+    def __partial_energy(self, p1:tuple, pn)->float:
+        partial_energy = 0
+        for j in range(len(pn[0])):
+            pj = (pn[0][j], pn[1][j], pn[2][j])
+            if not self.container.contains(pj):
+                return np.inf
+            
+            r = np.sqrt(
+                (p1[0] - pj[0])**2 +
+                (p1[1] - pj[1])**2 +
+                (p1[2] - pj[2])**2
+            )
+
+            if r < 1e-6: return np.inf
+            partial_energy += lj_potential(r)
+
+        return partial_energy
 
     def energy(self, system)->float:
         total_energy = 0
-        for i in range(self.num_of_particles):
-            pi = (system[0][i], system[1][i], system[2][i])
-            if not self.container.contains(pi):
-                return np.inf
+        with ThreadPoolExecutor() as exe:
+            futures = []
 
-            for j in range(i +1, self.num_of_particles):
-                pj = (system[0][j], system[1][j], system[2][j])
-                if not self.container.contains(pj):
+            for i in range(self.num_of_particles):
+                pi = (system[0][i], system[1][i], system[2][i])
+                if not self.container.contains(pi):
                     return np.inf
 
-                r = np.sqrt(
-                    (pi[0] - pj[0])**2 +
-                    (pi[1] - pj[1])**2 +
-                    (pi[2] - pj[2])**2
-                )
+                _xs = system[0][i+1:]
+                _ys = system[1][i+1:]
+                _zs = system[2][i+1:]
 
-                if r < 1e-6: return np.inf
+                _system = (_xs, _ys, _zs)
 
-                total_energy += lj_potential(r)
-        
+                ftr = exe.submit(self.__partial_energy, pi, _system)
+                futures.append(ftr)
+
+            for ftr in as_completed(futures):
+                try:
+                    partial_energy = ftr.result()
+                except Exception as e:
+                    print(e)
+                    raise e
+
+                if partial_energy == np.inf:
+                    return np.inf
+
+                total_energy += partial_energy
+
         return total_energy
     
     def initialize(self):
@@ -220,7 +247,7 @@ if TEST_MODE:
             
     def test_energy_decreases_along_simulation():
         container = get_region('block', (10, 10, 10))
-        sim = Simulation(container, 200
+        sim = Simulation(container, 500
             , stop_condition='max_steps_10')
         sim.start()
     
