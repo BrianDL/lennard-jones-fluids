@@ -3,6 +3,8 @@
 import math
 import numpy as np
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from montecarlosim.container import Region, get_region
 from montecarlosim.initializer import Initializer
 
@@ -17,9 +19,9 @@ class Simulation():
         , num_of_particles:int = 0
         , beta = 1 ### how to select this?
         , step_size:float = 0.01
-        , dynamic_factor:float = 0.0 
-        , stop_condition:str = 'max_steps_10K' ### Change this to something better
+        , stop_condition:str = 'max_steps_100' ### Change this to something better
         , initializer:Initializer = None ### Change this to something better
+        , dynamic_factor:float = 0.0 
     ):
 
         self.step_size = step_size
@@ -218,12 +220,12 @@ if TEST_MODE:
             
     def test_energy_decreases_along_simulation():
         container = get_region('block', (10, 10, 10))
-        sim = Simulation(container, 5000
-            , stop_condition='max_steps_10')
+        sim = Simulation(container, 500
+            , stop_condition='max_steps_100')
         sim.start()
     
-        # Verify that the simulation has exactly 10 steps
-        assert len(sim.steps) == 10, "The simulation should have exactly 10 steps"
+        # Verify that the simulation has exactly 100 steps
+        assert len(sim.steps) == 100, "The simulation should have exactly 100 steps"
     
         # Verify that the energy decreases from the first step to the last step
         initial_energy = sim.energies[0]
