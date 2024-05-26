@@ -18,16 +18,14 @@ class Simulation():
         , container:Region
         , num_of_particles:int = 0
         , beta = 1 ### how to select this?
-        , step_size:float = 0.01
-        , stop_condition:str = 'max_steps_100' ### Change this to something better
+        , step_size:float = 0.1
+        , stop_condition:str = 'max_steps_50' ### Change this to something better
         , initializer:Initializer = None ### Change this to something better
-        , dynamic_factor:float = 0.0 
     ):
 
         self.step_size = step_size
         self.beta = beta
         self.stop_condition = stop_condition
-        self.dynamic_factor = dynamic_factor
         self.initializer = initializer
 
         self.container = container
@@ -41,20 +39,31 @@ class Simulation():
         self.energies = []
         self.system = None
     
-    def __partial_energy(self, p1:tuple, pn)->float:
+    def __partial_energy(self, i:int, pi:tuple, init:int, system=None)->float:
         partial_energy = 0
-        for j in range(len(pn[0])):
-            pj = (pn[0][j], pn[1][j], pn[2][j])
+
+        if not self.container.contains(pi):
+            return np.inf
+
+        if not system:
+            system = self.system
+
+        for j in range(init, self.num_of_particles):
+            if i == j: continue
+
+            pj = (system[0][j], system[1][j], system[2][j])
             if not self.container.contains(pj):
                 return np.inf
             
             r = np.sqrt(
-                (p1[0] - pj[0])**2 +
-                (p1[1] - pj[1])**2 +
-                (p1[2] - pj[2])**2
+                (pi[0] - pj[0])**2 +
+                (pi[1] - pj[1])**2 +
+                (pi[2] - pj[2])**2
             )
 
-            if r < 1e-6: return np.inf
+            if r < 1e-6:
+                return np.inf
+
             partial_energy += lj_potential(r)
 
         return partial_energy
@@ -66,16 +75,8 @@ class Simulation():
 
             for i in range(self.num_of_particles):
                 pi = (system[0][i], system[1][i], system[2][i])
-                if not self.container.contains(pi):
-                    return np.inf
 
-                _xs = system[0][i+1:]
-                _ys = system[1][i+1:]
-                _zs = system[2][i+1:]
-
-                _system = (_xs, _ys, _zs)
-
-                ftr = exe.submit(self.__partial_energy, pi, _system)
+                ftr = exe.submit(self.__partial_energy, i, pi, i+1, system)
                 futures.append(ftr)
 
             for ftr in as_completed(futures):
@@ -135,6 +136,7 @@ class Simulation():
     def is_finished(self) -> bool:
         return any([
             self.stop_condition =='max_steps_10' and len(self.steps) >= 10
+            , self.stop_condition =='max_steps_50' and len(self.steps) >= 50
             , self.stop_condition =='max_steps_100' and len(self.steps) >= 100
             , self.stop_condition =='max_steps_1K' and len(self.steps) >= 1000
             , self.stop_condition =='max_steps_10K' and len(self.steps) >= 10000
@@ -142,42 +144,44 @@ class Simulation():
         ])
 
     def start(self):
+        self.initialize()
+
         while not self.is_finished(): self.move()
 
     def move(self):
         
-        if not self.system:
-            self.initialize()
+        ### Choose a random particle
+        i = np.random.randint(self.num_of_particles)
 
-        ### Calculating next step
-        xs = self.system[0].copy()
-        ys = self.system[1].copy()
-        zs = self.system[2].copy()
+        pi = (self.system[0][i], self.system[1][i], self.system[2][i])
+
+        new_pi = (
+            pi[0] + np.random.uniform(-self.step_size, self.step_size)
+            , pi[1] + np.random.uniform(-self.step_size, self.step_size)
+            , pi[2] + np.random.uniform(-self.step_size, self.step_size)
+        )
         
-        ### Randomly move a sample of particles
-        num_of_particles_to_move = \
-            int(self.num_of_particles * self.dynamic_factor) \
-            if self.dynamic_factor else 1
-
-        for j in range(num_of_particles_to_move):
-            ### Choose a random particle
-            i = np.random.randint(self.num_of_particles)
-            xs[i] += np.random.uniform(-self.step_size, self.step_size)
-            ys[i] += np.random.uniform(-self.step_size, self.step_size)
-            zs[i] += np.random.uniform(-self.step_size, self.step_size)
-
-        new_step = (xs, ys, zs)
-        new_step_energy = self.energy(new_step)
-
-        de = new_step_energy - self.energies[-1]
+        old_ith_contribution = self.__partial_energy(i, pi, 0)
+        new_ith_contribution = self.__partial_energy(i, new_pi, 0)
+        
+        de = new_ith_contribution - old_ith_contribution
 
         is_accepted = de < 0 \
             or np.exp(-self.beta * de) * np.random.rand()
 
         if is_accepted:
-            self.system = new_step
+            
+            xs = self.system[0].copy()
+            ys = self.system[1].copy()
+            zs = self.system[2].copy()
+
+            xs[i], ys[i], zs[i] = new_pi
+
+            new_step = (xs, ys, zs)
+            
             self.steps.append(new_step)
-            self.energies.append(new_step_energy)
+            self.system = new_step
+            self.energies.append(self.energies[-1] + de)
         
         return is_accepted
         
@@ -221,6 +225,8 @@ if TEST_MODE:
     def test_move():
         container = get_region('block', (10, 10, 10))
         sim = Simulation(container, 100)
+        sim.initialize()
+
         move_result = sim.move()
 
         if not move_result:
@@ -247,12 +253,11 @@ if TEST_MODE:
             
     def test_energy_decreases_along_simulation():
         container = get_region('block', (10, 10, 10))
-        sim = Simulation(container, 500
-            , stop_condition='max_steps_10')
+        sim = Simulation(container, 1000
+            , stop_condition='max_steps_50')
         sim.start()
     
-        # Verify that the simulation has exactly 100 steps
-        assert len(sim.steps) == 10, "The simulation should have exactly 10 steps"
+        assert len(sim.steps) == 50, "The simulation should have exactly 50 steps"
     
         # Verify that the energy decreases from the first step to the last step
         initial_energy = sim.energies[0]
