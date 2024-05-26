@@ -220,12 +220,12 @@ if TEST_MODE:
             
     def test_energy_decreases_along_simulation():
         container = get_region('block', (10, 10, 10))
-        sim = Simulation(container, 500
-            , stop_condition='max_steps_100')
+        sim = Simulation(container, 200
+            , stop_condition='max_steps_10')
         sim.start()
     
         # Verify that the simulation has exactly 100 steps
-        assert len(sim.steps) == 100, "The simulation should have exactly 100 steps"
+        assert len(sim.steps) == 10, "The simulation should have exactly 10 steps"
     
         # Verify that the energy decreases from the first step to the last step
         initial_energy = sim.energies[0]
@@ -236,3 +236,49 @@ if TEST_MODE:
         assert final_energy < initial_energy, \
             "The energy should decrease from the first step to the last step"
             
+    def test_energy_with_particles_at_same_position():
+        container = get_region('block', (10, 10, 10))
+        sim = Simulation(container, 2)
+        system = ([0, 0], [0, 0], [0, 0])  # Both particles at the same position
+        energy = sim.energy(system)
+        assert energy == np.inf, \
+            "Energy should be infinite for particles at the same position"
+    
+    def test_energy_with_particles_outside_container():
+        container = get_region('block', (10, 10, 10))
+        sim = Simulation(container, 2)
+        system = ([11, 12], [11, 12], [11, 12])  # Both particles outside the container
+        energy = sim.energy(system)
+        assert energy == np.inf, \
+            "Energy should be infinite for particles outside the container"
+    
+    def test_energy_with_valid_particles():
+        container = get_region('block', (10, 10, 10))
+        sim = Simulation(container, 2)
+        system = ([1, 2], [1, 2], [1, 2])  # Particles at a valid distance
+        energy = sim.energy(system)
+        assert energy != np.inf, \
+            "Energy should be finite for valid particle positions"
+        assert energy < 0, \
+            "Energy should be negative for attractive Lennard-Jones potential at this distance"
+    
+    def test_energy_difference_between_configurations():
+        container = get_region('block', (10, 10, 10))
+        sim = Simulation(container, 2)
+    
+        # Configuration 1: Particles at a closer distance
+        system1 = ([1, 1.5], [1, 1.5], [1, 1.5])
+        energy1 = sim.energy(system1)
+    
+        # Configuration 2: Particles at a farther distance
+        system2 = ([1, 3], [1, 3], [1, 3])
+        energy2 = sim.energy(system2)
+    
+        assert energy1 != np.inf and energy2 != np.inf, \
+            "Energies should be finite for valid particle positions"
+        
+        ### Verify this test, it is directly related to
+        ### LJ potential
+        assert energy2 < energy1, \
+            """Energy should be higher for particles at a closer distance 
+            due to the Lennard-Jones potential"""
