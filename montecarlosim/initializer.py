@@ -20,26 +20,19 @@ class Initializer(ABC):
 
     @abstractmethod
     def initialize(self, N: int) -> List[Tuple[float, float, float]]:
-        """
-        Generate a set of N points contained within the container.
+        raise NotImplementedError
 
-        Parameters:
-        - N: The number of points to generate.
-
-        Returns:
-        - List[Tuple[float, float, float]]: A list of points contained within the container.
-        """
-        pass
-
-def get_initializer(initializer_type: str, container: Region, *args, **kwargs) -> Initializer:
+def get_initializer(
+    initializer_type: str
+    , container: Region
+    , *args, **kwargs
+) -> Initializer:
     """
     Create an instance of an Initializer subclass based on the given type name.
 
     Parameters:
     - initializer_type: The name of the Initializer subclass to instantiate ('random').
     - container: An instance of a class that inherits from Region.
-    - *args: Positional arguments to pass to the Initializer subclass constructor.
-    - **kwargs: Keyword arguments to pass to the Initializer subclass constructor.
 
     Returns:
     - An instance of the specified Initializer subclass.
@@ -79,6 +72,10 @@ class RandomInitializer(Initializer):
 
         return points
 
+#############################################################################
+########################## TESTING CODE BELOW  ##############################
+#############################################################################
+
 
 import os
 import sys
@@ -105,7 +102,10 @@ if TEST_MODE:
         assert all(block.contains(point) for point in points), \
         "Not all points are contained within the block"
 
+    ### TODO: Test with a sphere. This will reveal a bug
+
     def test_get_initializer_invalid_type():
         block = Block((10, 10, 10))
         with pytest.raises(ValueError, match="Unknown initializer type: invalid"):
             get_initializer('invalid', block)
+            
