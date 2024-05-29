@@ -155,33 +155,44 @@ class Simulation():
 
         pi = (self.system[0][i], self.system[1][i], self.system[2][i])
 
+        ### propose a new position for the chosen particle
         new_pi = (
             pi[0] + np.random.uniform(-self.step_size, self.step_size)
             , pi[1] + np.random.uniform(-self.step_size, self.step_size)
             , pi[2] + np.random.uniform(-self.step_size, self.step_size)
         )
         
+        ### get the energy of both positions
         old_ith_contribution = self.__partial_energy(i, pi, 0)
         new_ith_contribution = self.__partial_energy(i, new_pi, 0)
         
+        ### calculate the difference in energy
         de = new_ith_contribution - old_ith_contribution
 
+        ### apply the Metropolis-Hastings acceptance criterion
         is_accepted = de < 0 \
             or np.exp(-self.beta * de) > np.random.rand()
 
+        ### if the move is accepted, update the system
         if is_accepted:
             
+            ### copy the old system
             xs = self.system[0].copy()
             ys = self.system[1].copy()
             zs = self.system[2].copy()
 
+            ### update the position of the chosen particle
             xs[i], ys[i], zs[i] = new_pi
 
+            ### create the new system
             new_step = (xs, ys, zs)
             
+            ### save the step and energy for replay
             self.steps.append(new_step)
-            self.system = new_step
             self.energies.append(self.energies[-1] + de)
+
+            ### assign the new system
+            self.system = new_step
         
         return is_accepted
         
