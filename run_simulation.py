@@ -8,23 +8,22 @@ from montecarlosim.plotter import Plotter
 
 def main():
 
-    L = 0.001
-    N = 300
+    L = 500
+    N = 600
 
     print(f"Simulation started at {time.asctime()}...")
     t0 = time.time()
 
     container = get_region('block', (L, L, L))
     sim = Simulation(container, N
-        , step_size=0.1
-        , epsilon=1
-        , beta=1
-        , stop_condition='max_steps_5K'
+        , step_size=0.2
+        , stop_condition='max_steps_6K'
+        , init_pressure=1
         )
     sim.start()
 
     dt = time.time() - t0
-    print(f"Simulation took {dt} ms")
+    print(f"Simulation took {dt} s")
 
     plotter = Plotter(sim)
     plotter.plot_energy()

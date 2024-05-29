@@ -21,6 +21,7 @@ class Simulation():
         , step_size:float = 0.1
         , stop_condition:str = 'max_steps_50' ### Change this to something better
         , epsilon = None
+        , init_pressure = 1
         , initializer:Initializer = None ### Change this to something better
     ):
 
@@ -28,6 +29,7 @@ class Simulation():
         self.beta = beta
         self.stop_condition = stop_condition
         self.initializer = initializer
+        self.init_pressure = init_pressure
 
         self.container = container
 
@@ -120,10 +122,12 @@ class Simulation():
         
         max_x, max_y, max_z = self.container.corner
 
+        pf = self.init_pressure
+
         np.random.seed()
-        xs = 0.5 * max_x * np.random.rand(self.num_of_particles)
-        ys = 0.5 * max_y * np.random.rand(self.num_of_particles)
-        zs = 0.5 * max_z * np.random.rand(self.num_of_particles)
+        xs = pf * max_x * np.random.rand(self.num_of_particles)
+        ys = pf * max_y * np.random.rand(self.num_of_particles)
+        zs = pf * max_z * np.random.rand(self.num_of_particles)
 
         for i in range(self.num_of_particles):
             pi = (xs[i], ys[i], zs[i])
@@ -157,7 +161,8 @@ class Simulation():
             , self.stop_condition =='max_steps_100' and len(self.steps) >= 100
             , self.stop_condition =='max_steps_500' and len(self.steps) >= 500
             , self.stop_condition =='max_steps_1K' and len(self.steps) >= 1000
-            , self.stop_condition =='max_steps_5K' and len(self.steps) >= 1000
+            , self.stop_condition =='max_steps_5K' and len(self.steps) >= 5000
+            , self.stop_condition =='max_steps_6K' and len(self.steps) >= 6000
             , self.stop_condition =='max_steps_10K' and len(self.steps) >= 10000
             , self.stop_condition =='max_steps_100K' and len(self.steps) >= 100000
         ])
@@ -330,18 +335,23 @@ if TEST_MODE:
         sim = Simulation(container, 2)
     
         # Configuration 1: Particles at a closer distance
-        system1 = ([1, 1.5], [1, 1.5], [1, 1.5])
+        system1 = ([1, 3], [1, 3], [1, 3])
         energy1 = sim.energy(system1)
     
         # Configuration 2: Particles at a farther distance
-        system2 = ([1, 3], [1, 3], [1, 3])
+        system2 = ([1, 6], [1, 6], [1, 6])
         energy2 = sim.energy(system2)
     
         assert energy1 != np.inf and energy2 != np.inf, \
             "Energies should be finite for valid particle positions"
         
-        ### Verify this test, it is directly related to
-        ### LJ potential
-        assert energy2 < energy1, \
+        assert energy2 > energy1, \
             """Energy should be higher for particles at a closer distance 
             due to the Lennard-Jones potential"""
+            
+    def test_lj():
+        assert lj_potential(1) == 0, \
+            """Potential at 1 should be 0"""
+        
+        assert lj_potential(math.pow(2, (1/6))) == -1, \
+            """Potential should be -1"""

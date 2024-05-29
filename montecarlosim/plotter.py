@@ -6,12 +6,10 @@ class Plotter:
 
     def plot_energy(self):
         energies = self.simulation.energies
-        
         steps = range(len(energies))
         
         plt.figure(figsize=(10, 6))
-        # plt.plot(steps, energies, marker='o', linestyle='-', color='b')
-        plt.scatter(steps, energies, color='b')
+        plt.plot(steps, energies, marker='.', linestyle='-', color='b', markersize=2)
         plt.title('Energy Variation Over Time')
         plt.xlabel('Step')
         plt.ylabel('Energy')
