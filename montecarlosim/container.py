@@ -57,6 +57,7 @@ class Sphere(Region):
         self.radius = radius
         # Set the center of the sphere to (radius, radius, radius)
         self.center = (radius, radius, radius)
+        self.corner = (2*radius, 2*radius, 2*radius)
 
     def contains(self, point):
         """
