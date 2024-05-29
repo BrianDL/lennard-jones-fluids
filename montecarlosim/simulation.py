@@ -167,7 +167,7 @@ class Simulation():
         de = new_ith_contribution - old_ith_contribution
 
         is_accepted = de < 0 \
-            or np.exp(-self.beta * de) * np.random.rand()
+            or np.exp(-self.beta * de) > np.random.rand()
 
         if is_accepted:
             
