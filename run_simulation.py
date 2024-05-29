@@ -18,7 +18,7 @@ def main():
     sim = Simulation(container, N
         , step_size=0.2
         , stop_condition='max_steps_6K'
-        , init_pressure=0.2
+        , init_pressure=0.5
         )
     sim.start()
 
