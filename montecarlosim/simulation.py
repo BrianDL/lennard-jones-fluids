@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from montecarlosim.container import Region, get_region
 from montecarlosim.initializer import Initializer
 
-def lj_potential(r) -> float: ### verify this is correct
-    return 4 * (math.pow(r, -12) - math.pow(r, -6))
+def lj_potential(r, eps = 1) -> float: ### verify this is correct
+    return 4 * (math.pow(r, -12) - math.pow(r, -6)) * (eps)
 
 
 class Simulation():
@@ -20,10 +20,11 @@ class Simulation():
         , beta = 0.769230 ### based on theory
         , step_size:float = 0.1
         , stop_condition:str = 'max_steps_50' ### Change this to something better
+        , epsilon = None
         , initializer:Initializer = None ### Change this to something better
     ):
 
-        self.step_size = step_size
+        
         self.beta = beta
         self.stop_condition = stop_condition
         self.initializer = initializer
@@ -33,7 +34,22 @@ class Simulation():
         assert num_of_particles > 0, \
             "num_of_particles must be a positive number"
 
+        max_x, max_y, max_z = self.container.corner
+        container_radius = np.sqrt(
+            (max_x)**2 +
+            (max_y)**2 +
+            (max_z)**2
+        )
+
+        self.step_size = step_size * container_radius
+        
+        
         self.num_of_particles = num_of_particles
+        
+        if epsilon:
+            self.eps = epsilon
+        else:
+            self.eps = container_radius / num_of_particles
         
         self.steps = []
         self.energies = []
@@ -64,7 +80,7 @@ class Simulation():
             if r < 1e-6:
                 return np.inf
 
-            partial_energy += lj_potential(r)
+            partial_energy += lj_potential(r, eps = self.eps)
 
         return partial_energy
 
@@ -104,9 +120,10 @@ class Simulation():
         
         max_x, max_y, max_z = self.container.corner
 
-        xs = max_x * np.random.rand(self.num_of_particles)
-        ys = max_y * np.random.rand(self.num_of_particles)
-        zs = max_z * np.random.rand(self.num_of_particles)
+        np.random.seed()
+        xs = 0.5 * max_x * np.random.rand(self.num_of_particles)
+        ys = 0.5 * max_y * np.random.rand(self.num_of_particles)
+        zs = 0.5 * max_z * np.random.rand(self.num_of_particles)
 
         for i in range(self.num_of_particles):
             pi = (xs[i], ys[i], zs[i])
@@ -138,7 +155,9 @@ class Simulation():
             self.stop_condition =='max_steps_10' and len(self.steps) >= 10
             , self.stop_condition =='max_steps_50' and len(self.steps) >= 50
             , self.stop_condition =='max_steps_100' and len(self.steps) >= 100
+            , self.stop_condition =='max_steps_500' and len(self.steps) >= 500
             , self.stop_condition =='max_steps_1K' and len(self.steps) >= 1000
+            , self.stop_condition =='max_steps_5K' and len(self.steps) >= 1000
             , self.stop_condition =='max_steps_10K' and len(self.steps) >= 10000
             , self.stop_condition =='max_steps_100K' and len(self.steps) >= 100000
         ])
@@ -170,7 +189,8 @@ class Simulation():
         de = new_ith_contribution - old_ith_contribution
 
         ### apply the Metropolis-Hastings acceptance criterion
-        is_accepted = de < 0 \
+        np.random.seed()
+        is_accepted = de <= 0 \
             or np.exp(-self.beta * de) > np.random.rand()
 
         ### if the move is accepted, update the system
