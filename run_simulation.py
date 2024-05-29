@@ -34,7 +34,7 @@ def main():
     plotter.plot_3d_state()
     
     plotter.create_gif(filename='system_evolution.gif'
-        , plot_type='3d', step_interval=10)
+        , plot_type='3d', step_interval=50)
 
 if __name__ == '__main__':
     main()
