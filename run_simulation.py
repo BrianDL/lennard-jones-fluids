@@ -9,7 +9,7 @@ from montecarlosim.plotter import Plotter
 def main():
 
     L = 500
-    N = 1200
+    N = 600
 
     print(f"Simulation started at {time.asctime()}...")
     t0 = time.time()
@@ -32,6 +32,9 @@ def main():
     plotter.plot_xz_projection()
     
     plotter.plot_3d_state()
+    
+    plotter.create_gif(filename='system_evolution.gif'
+        , plot_type='3d', step_interval=100)
 
 if __name__ == '__main__':
     main()
