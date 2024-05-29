@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from montecarlosim.container import Region, get_region
 from montecarlosim.initializer import Initializer
 
-def lj_potential(r, eps = 1) -> float: ### verify this is correct
-    return 4 * (math.pow(r, -12) - math.pow(r, -6)) * (eps)
+def lj_potential(r) -> float: ### verify this is correct
+    return 4 * (math.pow(r, -12) - math.pow(r, -6))
 
 
 class Simulation():
@@ -80,7 +80,7 @@ class Simulation():
             if r < 1e-6:
                 return np.inf
 
-            partial_energy += lj_potential(r, eps = self.eps)
+            partial_energy += lj_potential(r)
 
         return partial_energy
 
@@ -190,7 +190,7 @@ class Simulation():
 
         ### apply the Metropolis-Hastings acceptance criterion
         np.random.seed()
-        is_accepted = de <= 0 \
+        is_accepted = de < 0 \
             or np.exp(-self.beta * de) > np.random.rand()
 
         ### if the move is accepted, update the system
