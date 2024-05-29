@@ -134,9 +134,9 @@ class Simulation():
 
             while not self.container.contains(pi):
                 pi = (
-                    max_x * np.random.rand(),
-                    max_y * np.random.rand(),
-                    max_z * np.random.rand()
+                    pf * max_x * np.random.rand(),
+                    pf * max_y * np.random.rand(),
+                    pf * max_z * np.random.rand()
                 )
             
             xs[i], ys[i], zs[i] = pi[0], pi[1], pi[2]

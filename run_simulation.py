@@ -14,11 +14,11 @@ def main():
     print(f"Simulation started at {time.asctime()}...")
     t0 = time.time()
 
-    container = get_region('block', (L, L, L))
+    container = get_region('sphere', radius=L)
     sim = Simulation(container, N
         , step_size=0.2
         , stop_condition='max_steps_6K'
-        , init_pressure=1
+        , init_pressure=0.2
         )
     sim.start()
 
@@ -27,8 +27,11 @@ def main():
 
     plotter = Plotter(sim)
     plotter.plot_energy()
+    
     plotter.plot_xz_projection(0)
     plotter.plot_xz_projection()
+    
+    plotter.plot_3d_state()
 
 if __name__ == '__main__':
     main()
