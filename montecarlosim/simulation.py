@@ -17,7 +17,7 @@ class Simulation():
         self 
         , container:Region
         , num_of_particles:int = 0
-        , beta = 1 ### how to select this?
+        , beta = 0.769230 ### based on theory
         , step_size:float = 0.1
         , stop_condition:str = 'max_steps_50' ### Change this to something better
         , initializer:Initializer = None ### Change this to something better
