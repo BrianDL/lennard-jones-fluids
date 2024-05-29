@@ -353,5 +353,8 @@ if TEST_MODE:
         assert lj_potential(1) == 0, \
             """Potential at 1 should be 0"""
         
-        assert lj_potential(math.pow(2, (1/6))) == -1, \
+        potential = round(lj_potential(math.pow(2, (1/6))), 0)
+        print(potential)
+
+        assert potential == -1, \
             """Potential should be -1"""

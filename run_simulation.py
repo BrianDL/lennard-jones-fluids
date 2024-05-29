@@ -9,7 +9,7 @@ from montecarlosim.plotter import Plotter
 def main():
 
     L = 500
-    N = 600
+    N = 1200
 
     print(f"Simulation started at {time.asctime()}...")
     t0 = time.time()
