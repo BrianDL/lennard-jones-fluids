@@ -27,7 +27,7 @@ class Plotter:
         max_x, _, max_z = self.simulation.container.corner
 
         plt.figure(figsize=(10, 6))
-        plt.scatter(xs, zs, color='r')
+        plt.scatter(xs, zs, color='b')
         plt.xlim(0, max_x)
         plt.ylim(0, max_z)
         plt.title('Projection of the System on the XZ Plane')
